@@ -1,0 +1,17 @@
+﻿version: "3.4"
+services:
+  rabbit-in-memory:
+    image: rabbitmq:management
+    tmpfs: /data/broker
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  postgres-in-memory:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: 'postgres'
+    volumes:
+      - ./data/db:/data/db
+    ports:
+      - "5432:5432"
