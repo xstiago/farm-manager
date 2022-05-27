@@ -5,6 +5,11 @@ namespace FarmManager.Infrastructure.Messaging
 {
     public abstract class RabbitBase : IDisposable
     {
+        private static IConnection CreateConnection(ConnectionFactory connectionFactory)
+        {
+            return connectionFactory.CreateConnection();
+        }
+
         private static ConnectionFactory GetConnectionFactory(IMessagingConnection messagingConnection)
         {
             var connectionFactory = new ConnectionFactory
@@ -18,11 +23,7 @@ namespace FarmManager.Infrastructure.Messaging
             return connectionFactory;
         }
 
-        private static IConnection CreateConnection(ConnectionFactory connectionFactory)
-        {
-            return connectionFactory.CreateConnection();
-        }
-
+        protected const string Exchange = "master";
         protected readonly IConnection _connection;
 
         protected RabbitBase(IMessagingConnection messagingConnection)

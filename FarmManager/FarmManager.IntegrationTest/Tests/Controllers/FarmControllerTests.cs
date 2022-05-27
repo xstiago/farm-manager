@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using FarmManager.Domain.Dtos;
 using FarmManager.Domain.Entities;
-using FarmManager.Domain.Interfaces;
 using FarmManager.IntegrationTest.Fixtures;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +20,6 @@ namespace FarmManager.IntegrationTest.Tests.Controllers
         private readonly HttpClient _apiClient;
         private readonly DatabaseFixture _databaseFixture;
         private readonly IMapper _mapper;
-        private readonly IMessagingSubscriber<FarmDto> _messagingSubscriber;
 
         public FarmControllerTests(
             WebApplicationFixture<Program> webApplicationFixture,
@@ -29,8 +27,6 @@ namespace FarmManager.IntegrationTest.Tests.Controllers
         {
             _apiClient = webApplicationFixture.CreateClient();
             _databaseFixture = databaseFixture;
-
-            _messagingSubscriber = webApplicationFixture.Services.GetRequiredService<IMessagingSubscriber<FarmDto>>();
             _mapper = webApplicationFixture.Services.GetRequiredService<IMapper>();
         }
 
@@ -91,12 +87,6 @@ namespace FarmManager.IntegrationTest.Tests.Controllers
             Assert.Equal(farm.Id, entity!.Id);
             Assert.Equal(farm.Name, entity!.Name);
 
-            var message = _messagingSubscriber.RetrieveSingleMessage();
-
-            Assert.NotNull(message);
-            Assert.Equal(farm.Id, message!.Event.Id);
-            Assert.Equal(EventStatus.Create, message!.Status);
-
             #endregion Assert
         }
 
@@ -124,11 +114,6 @@ namespace FarmManager.IntegrationTest.Tests.Controllers
             var entity = await _databaseFixture.SingleOrDefaultAsync<FarmEntity>(o => o.Id == farm.Id);
 
             Assert.Null(entity);
-
-            var message = _messagingSubscriber.RetrieveSingleMessage();
-
-            Assert.Equal(farm.Id, message!.Event.Id);
-            Assert.Equal(EventStatus.Delete, message!.Status);
 
             #endregion Assert
         }
@@ -162,10 +147,51 @@ namespace FarmManager.IntegrationTest.Tests.Controllers
             Assert.Equal(farm.Id, entity!.Id);
             Assert.Equal(farm.Name, entity!.Name);
 
-            var message = _messagingSubscriber.RetrieveSingleMessage();
+            #endregion Assert
+        }
 
-            Assert.Equal(farm.Id, message!.Event.Id);
-            Assert.Equal(EventStatus.Update, message!.Status);
+        [Fact]
+        public async Task Should_Return_Http_Status_404_When_Try_Delete_A_Farm_That_No_Exists()
+        {
+            #region Arrange
+
+            var farm = new FarmDto(Guid.NewGuid(), "The Farm");
+
+            #endregion Arrange
+
+            #region Act
+
+            var response = await _apiClient.DeleteAsync($"api/farm/{farm.Id}");
+
+            #endregion Act
+
+            #region Assert
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+            #endregion Assert
+        }
+
+        [Fact]
+        public async Task Should_Return_Http_Status_409_When_Try_Delete_A_Farm_And_Exists_A_Ralated_Device()
+        {
+            #region Arrange
+
+            var farm = new FarmEntity { Id = Guid.NewGuid(), Name = "The Farm" };
+            var device = new DeviceEntity { Id = Guid.NewGuid(), Farm = farm };
+            await _databaseFixture.AddAsync(_mapper.Map<DeviceEntity>(device));
+
+            #endregion Arrange
+
+            #region Act
+
+            var response = await _apiClient.DeleteAsync($"api/farm/{farm.Id}");
+
+            #endregion Act
+
+            #region Assert
+
+            Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
 
             #endregion Assert
         }

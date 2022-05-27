@@ -1,28 +1,28 @@
 ﻿using AutoMapper;
 using FarmManager.Domain.Dtos;
 using FarmManager.Domain.Entities;
+using FarmManager.Domain.Exceptions;
 using FarmManager.Domain.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace FarmManager.Domain.Services
 {
-    public class FarmService : IFarmService
+    public class FarmService : IService<FarmDto>
     {
-        private readonly IMessagingPublisher<FarmDto> _publisher;
         private readonly IMapper _mapper;
-        private readonly IRepository<FarmEntity> _repository;
+        private readonly IRepository<DeviceEntity> _deviceRepository;
+        private readonly IRepository<FarmEntity> _farmRepository;
         private readonly ILogger _logger;
 
         public FarmService(
-            IServiceProvider provider,
             IMapper mapper,
-            IRepository<FarmEntity> repository,
+            IRepository<DeviceEntity> deviceRepository,
+            IRepository<FarmEntity> farmRepository,
             ILogger<FarmService> logger)
         {
-            _publisher = provider.GetRequiredService<IMessagingPublisher<FarmDto>>();
             _mapper = mapper;
-            _repository = repository;
+            _deviceRepository = deviceRepository;
+            _farmRepository = farmRepository;
             _logger = logger;
         }
 
@@ -31,12 +31,7 @@ namespace FarmManager.Domain.Services
             try
             {
                 var entity = _mapper.Map<FarmEntity>(farm);
-                await _repository.AddAsync(entity);
-                _publisher.Publish(new EventDto<FarmDto>
-                {
-                    Event = farm,
-                    Status = EventStatus.Create
-                });
+                await _farmRepository.AddAsync(entity);
             }
             catch (Exception ex)
             {
@@ -50,12 +45,7 @@ namespace FarmManager.Domain.Services
             try
             {
                 var entity = _mapper.Map<FarmEntity>(farm);
-                await _repository.UpdateAsync(entity);
-                _publisher.Publish(new EventDto<FarmDto>
-                {
-                    Event = farm,
-                    Status = EventStatus.Update
-                });
+                await _farmRepository.UpdateAsync(entity);
             }
             catch (Exception ex)
             {
@@ -68,12 +58,17 @@ namespace FarmManager.Domain.Services
         {
             try
             {
-                await _repository.RemoveAsync(entity => entity.Id == id);
-                _publisher.Publish(new EventDto<FarmDto>
-                {
-                    Event = new FarmDto(id, string.Empty),
-                    Status = EventStatus.Delete
-                });
+                var farmFound = await _farmRepository.GetSingleAsync(farm => farm.Id == id);
+
+                if (farmFound is null)
+                    throw new EntityNotFoundException($"FarmId: { id }");
+
+                var deviceFound = await _deviceRepository.GetSingleAsync(device => device.Farm.Id == id);
+
+                if (deviceFound is not null)
+                    throw new EntityDependencyException($"DeviceId: {deviceFound.Id}");
+
+                await _farmRepository.RemoveAsync(entity => entity.Id == id);
             }
             catch (Exception ex)
             {
@@ -86,7 +81,7 @@ namespace FarmManager.Domain.Services
         {
             try
             {
-                var entities = await _repository.GetAsync(entity => entity.Id != Guid.Empty);
+                var entities = await _farmRepository.GetAsync(entity => entity.Id != Guid.Empty);
                 return _mapper.Map<IEnumerable<FarmDto>>(entities);
             }
             catch (Exception ex)

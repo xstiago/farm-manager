@@ -14,6 +14,15 @@ namespace FarmManager.IntegrationTest.Fixtures
         {
             builder.ConfigureServices(services =>
             {
+                builder.ConfigureAppConfiguration(config =>
+                {
+                    var integrationConfig = new ConfigurationBuilder()
+                        .AddJsonFile("appsettings.IntegrationTest.json")
+                        .Build();
+
+                    config.AddConfiguration(integrationConfig);
+                });
+
                 services.AddSingleton<IMessagingSubscriber<FarmDto>>(s =>
                 {
                     var configuration = s.GetService<IConfiguration>();
@@ -22,6 +31,16 @@ namespace FarmManager.IntegrationTest.Fixtures
                     var brokerName = configuration!.GetSection("BrokerName").Value;
 
                     return new RabbitSubscriber<FarmDto>(rabbitConnection, brokerName);
+                });
+
+                services.AddSingleton<IMessagingSubscriber<DeviceDto>>(s =>
+                {
+                    var configuration = s.GetService<IConfiguration>();
+
+                    var rabbitConnection = new RabbitConnection(configuration!);
+                    var brokerName = configuration!.GetSection("BrokerName").Value;
+
+                    return new RabbitSubscriber<DeviceDto>(rabbitConnection, brokerName);
                 });
             });
         }

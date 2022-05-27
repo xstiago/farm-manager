@@ -9,7 +9,7 @@
 
     public class EventDto<TEvent>
     {
-        public TEvent Event { get; set; }
+        public TEvent Event { get; set; } = default(TEvent)!;
         public EventStatus Status  { get; set; }
     }
 }

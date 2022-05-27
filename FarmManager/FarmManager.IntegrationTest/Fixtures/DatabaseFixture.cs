@@ -12,10 +12,10 @@ namespace FarmManager.IntegrationTest.Fixtures
     {
         private readonly string _connectionString;
 
-        private FarmDbContext CreateDbContext()
+        private FarmManagerDbContext CreateDbContext()
         {
-            var options = new DbContextOptionsBuilder<FarmDbContext>().UseNpgsql(_connectionString).Options;
-            var context = new FarmDbContext(options);
+            var options = new DbContextOptionsBuilder<FarmManagerDbContext>().UseNpgsql(_connectionString).Options;
+            var context = new FarmManagerDbContext(options);
 
             context.Database.EnsureCreated();
 

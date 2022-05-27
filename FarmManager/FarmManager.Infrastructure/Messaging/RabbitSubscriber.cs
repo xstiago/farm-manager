@@ -23,6 +23,8 @@ namespace FarmManager.Infrastructure.Messaging
 
             using var channel = _connection.CreateModel();
 
+            channel.ExchangeDeclare(exchange: Exchange, type: "direct");
+            channel.QueueDeclare(queue: _brokerName, true, false, false, null);
             data = channel.BasicGet(_brokerName, true);
 
             if (data != null)

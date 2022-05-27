@@ -10,7 +10,6 @@ namespace FarmManager.Infrastructure.Messaging
         where TEvent : class
     {
         private readonly string _brokerName;
-        private const string Exchange = "master";
 
         public RabbitPublisher(IMessagingConnection messagingConnection, string brokerName)
             : base(messagingConnection)

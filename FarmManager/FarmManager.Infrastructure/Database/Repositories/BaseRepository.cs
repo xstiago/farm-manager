@@ -7,9 +7,9 @@ namespace FarmManager.Infrastructure.Database.Repositories
     public abstract class BaseRepository<TEntity> : IRepository<TEntity>
         where TEntity : class, IEntity
     {
-        protected readonly FarmDbContext Context;
+        protected readonly FarmManagerDbContext Context;
 
-        protected BaseRepository(FarmDbContext context)
+        protected BaseRepository(FarmManagerDbContext context)
         {
             Context = context;
             Set = Context.Set<TEntity>();

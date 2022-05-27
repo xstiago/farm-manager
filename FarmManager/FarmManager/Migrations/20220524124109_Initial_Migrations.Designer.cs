@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace FarmManager.Migrations
 {
-    [DbContext(typeof(FarmDbContext))]
+    [DbContext(typeof(FarmManagerDbContext))]
     [Migration("20220524124109_Initial_Migrations")]
     partial class Initial_Migrations
     {

@@ -21,7 +21,7 @@ namespace FarmManager.Infrastructure.Extensions
 
             var connectionString = configuration!.GetSection("FarmDatabaseConnectionString").Value;
 
-            services.AddDbContextPool<FarmDbContext>(options =>
+            services.AddDbContextPool<FarmManagerDbContext>(options =>
                 options.UseNpgsql(connectionString,
                     sqlServerOptions => sqlServerOptions
                         .MigrationsAssembly("FarmManager")
@@ -29,21 +29,21 @@ namespace FarmManager.Infrastructure.Extensions
                             maxRetryCount: 6,
                             maxRetryDelay: TimeSpan.FromSeconds(10),
                             errorCodesToAdd: null)
-                        .MigrationsHistoryTable("__EFMigrationsHistory", FarmDbContext.DefaultSchema)));
+                        .MigrationsHistoryTable("__EFMigrationsHistory", FarmManagerDbContext.DefaultSchema)));
 
             return services;
         }
 
         private static IServiceCollection AddMessaging(this IServiceCollection services)
         {
-            services.AddSingleton<IMessagingPublisher<FarmDto>>(s =>
+            services.AddSingleton<IMessagingPublisher<DeviceDto>>(s =>
             {
                 var configuration = s.GetService<IConfiguration>();
 
                 var rabbitConnection = new RabbitConnection(configuration!);
                 var brokerName = configuration!.GetSection("BrokerName").Value;
 
-                return new RabbitPublisher<FarmDto>(rabbitConnection, brokerName);
+                return new RabbitPublisher<DeviceDto>(rabbitConnection, brokerName);
             });
 
             return services;
@@ -52,13 +52,15 @@ namespace FarmManager.Infrastructure.Extensions
         private static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             services.AddScoped<IRepository<FarmEntity>, FarmRepository>();
+            services.AddScoped<IRepository<DeviceEntity>, DeviceRepository>();
             return services;
         }
 
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddAutoMapper(typeof(FarmProfile));
-            services.AddScoped<IFarmService, FarmService>();
+            services.AddScoped<IService<FarmDto>, FarmService>();
+            services.AddScoped<IService<DeviceDto>, DeviceService>();
             return services;
         }
 

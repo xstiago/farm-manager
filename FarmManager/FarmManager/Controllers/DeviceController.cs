@@ -7,30 +7,29 @@ namespace FarmManager.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class FarmController : ControllerBase
+    public class DeviceController : ControllerBase
     {
-        private readonly ILogger<FarmController> _logger;
-        private readonly IService<FarmDto> _service;
+        private readonly ILogger<DeviceController> _logger;
+        private readonly IService<DeviceDto> _service;
 
         private IActionResult HandleException(Exception ex, string apiMethodName)
         {
-            _logger.LogError(ex, $"{apiMethodName} farms api fatal error.");
+            _logger.LogError(ex, $"{apiMethodName} devices api fatal error.");
             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
         }
 
-        public FarmController(IService<FarmDto> service, ILogger<FarmController> logger)
+        public DeviceController(IService<DeviceDto> service, ILogger<DeviceController> logger)
         {
             _service = service;
             _logger = logger;
         }
 
         /// <summary>
-        /// Delete the specified farm
+        /// Delete the specified device
         /// </summary>
-        /// <param name="id">Farm identifier</param>
+        /// <param name="id">Device identifier</param>
         /// <response code="200">When the information was successfully deleted</response>
-        /// <response code="404">When not found the farm to delete</response>
-        /// <response code="409">When any device is related to the farm</response>
+        /// <response code="404">When not found the device to delete</response>
         /// <response code="500">When an internal error occurs</response>
         /// <returns></returns>
         [HttpDelete("{id}")]
@@ -49,10 +48,6 @@ namespace FarmManager.Controllers
             {
                 return NotFound(ex.Message);
             }
-            catch (EntityDependencyException ex)
-            {
-                return Conflict(ex.Message);
-            }
             catch (Exception ex)
             {
                 return HandleException(ex, "Delete");
@@ -60,9 +55,9 @@ namespace FarmManager.Controllers
         }
 
         /// <summary>
-        /// Gets all registered farms
+        /// Gets all registered devices
         /// </summary>
-        /// <returns>List os farms</returns>
+        /// <returns>List os devices</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [Produces("application/json")]
@@ -79,21 +74,26 @@ namespace FarmManager.Controllers
         }
 
         /// <summary>
-        /// Create a farm
+        /// Create a device
         /// </summary>
-        /// <param name="farm">Farm data</param>
+        /// <param name="device">Device data</param>
         /// <response code="200">When the information was successfully integrated</response>
+        /// <response code="404">When not found the farm to create a device</response>
         /// <response code="500">When an internal error occurs</response>
         /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PostAsync([FromBody] FarmDto farm)
+        public async Task<IActionResult> PostAsync([FromBody] DeviceDto device)
         {
             try
             {
-                await _service.CreateAsync(farm);
+                await _service.CreateAsync(device);
                 return Ok();
+            }
+            catch (EntityNotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -102,21 +102,26 @@ namespace FarmManager.Controllers
         }
 
         /// <summary>
-        /// Update a farm
+        /// Update a device
         /// </summary>
-        /// <param name="farm">Farm data</param>
+        /// <param name="device">Device data</param>
         /// <response code="200">When the information was successfully updated</response>
+        /// <response code="404">When not found the farm to update a device</response>
         /// <response code="500">When an internal error occurs</response>
         /// <returns></returns>
         [HttpPut()]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PutAsync([FromBody] FarmDto farm)
+        public async Task<IActionResult> PutAsync([FromBody] DeviceDto device)
         {
             try
             {
-                await _service.UpdateAsync(farm);
+                await _service.UpdateAsync(device);
                 return Ok();
+            }
+            catch (EntityNotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {

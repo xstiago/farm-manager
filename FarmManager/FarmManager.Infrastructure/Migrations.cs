@@ -13,7 +13,7 @@ namespace FarmManager.Infrastructure
         public static async Task ApplyAsync(IServiceProvider provider)
         {
             using var scope = provider.CreateScope();
-            using var dbContext = scope.ServiceProvider.GetRequiredService<FarmDbContext>();
+            using var dbContext = scope.ServiceProvider.GetRequiredService<FarmManagerDbContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Migrations>>();
 
             if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())

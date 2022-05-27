@@ -2,7 +2,7 @@
 
 namespace FarmManager.Infrastructure.Database
 {
-    public class FarmDbContext : DbContext
+    public class FarmManagerDbContext : DbContext
     {
         public const string DefaultSchema = "farm-manager";
 
@@ -15,6 +15,6 @@ namespace FarmManager.Infrastructure.Database
             base.OnModelCreating(modelBuilder);
         }
 
-        public FarmDbContext(DbContextOptions<FarmDbContext> options) : base(options) { }
+        public FarmManagerDbContext(DbContextOptions<FarmManagerDbContext> options) : base(options) { }
     }
 }
